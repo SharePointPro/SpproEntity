@@ -37,6 +37,7 @@ namespace SpproFramework.Migrate.Builders
                       + "using SpproFramework.Generic;\n"
                       + "using System;\n"
                       + "using System.Collections.Generic;\n"
+                      + "using Microsoft.SharePoint.Client;\n"
                       + "using System.Device.Location;\n\n";
             }
         }
@@ -72,22 +73,21 @@ namespace SpproFramework.Migrate.Builders
             return string.Format("\t\tpublic virtual SpproRepository<{0}> {0} {{ get; set; }}\n\n", propertyName);
         }
 
-        private string CreateEntityMethod(string methodName, string typeName, string fieldType, string spName)
+        private string CreateEntityMethod(string methodName, string typeName, string fieldType, bool readOnly, string spName)
         {
             string classString = string.Empty;
-            if (!string.IsNullOrWhiteSpace(fieldType) && !string.IsNullOrWhiteSpace(spName))
+            string fieldTypeString = string.Empty;
+            string readOnlyString = string.Empty;
+            string spNameString = string.Format("SpName = \"{0}\"", spName);
+            if (!string.IsNullOrWhiteSpace(fieldType))
             {
-                classString = string.Format("\t\t[SpproFieldAttribute(FieldType = \"{0}\", SpName = \"{1}\")]\n", fieldType, spName);
+                fieldTypeString = string.Format("FieldType = \"{0}\", ", fieldType);
             }
-            else if (!string.IsNullOrWhiteSpace(fieldType))
+            if (readOnly)
             {
-                classString = string.Format("\t\t[SpproFieldAttribute(FieldType = \"{0}\")]\n", fieldType);
+                readOnlyString = string.Format(" ReadOnly = true, ", fieldType);
             }
-            else
-            {
-                classString = string.Format("\t\t[SpproFieldAttribute(SpName = \"{0}\")]\n", spName);
-            }
-
+            classString = string.Format("\t\t[SpproFieldAttribute({0}{1}{2})]\n", fieldTypeString, readOnlyString, spNameString);
             return string.Format("{0}\t\tpublic {1} {2} {{ get; set; }}\n\n", classString, typeName, methodName);
         }
 
@@ -100,7 +100,7 @@ namespace SpproFramework.Migrate.Builders
         {
             var classString = CreateEntityUsingDeclerations;
             classString += CreateNamespace(nameSpaceString);
-            classString += CreateEntityClassDecleration(selectedList.List.Title.CleanName(),selectedList.List.Title);
+            classString += CreateEntityClassDecleration(selectedList.List.Title.CleanName(), selectedList.List.Title);
             List<string> propertyNames = new List<string>();
             foreach (var field in selectedList.CheckedField)
             {
@@ -145,7 +145,7 @@ namespace SpproFramework.Migrate.Builders
                         if (propertyName.Substring(propertyName.Length - 2).ToLower() != "id")
                         {
                             propertyName = propertyName + "ID";
-                        }                        
+                        }
                         break;
 
                     case "User":
@@ -154,16 +154,17 @@ namespace SpproFramework.Migrate.Builders
                         if (propertyName.Substring(propertyName.Length - 2).ToLower() != "id")
                         {
                             propertyName = propertyName + "ID";
-                        }                        
+                        }
                         break;
-
+                    case "URL":
+                        cType = "FieldUrlValue";
+                        break;
                     default:
                         cType = "string";
                         break;
-
-
                 }
-                classString += CreateEntityMethod(propertyName, cType, spType, field.InternalName);
+                classString += CreateEntityMethod(propertyName, cType, spType, field.ReadOnlyField, field.InternalName);
+
             }
             classString += CloseClass();
             return classString;

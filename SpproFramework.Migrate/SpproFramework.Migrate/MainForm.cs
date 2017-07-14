@@ -97,8 +97,9 @@ namespace SpproFramework.Migrate
 
             SpContext.ClientContext.Load(spList.Fields);
             SpContext.ClientContext.ExecuteQuery();
-            foreach (var field in spList.Fields)
+            foreach (var field in spList.Fields.Where(a=> !InternalFields.List.Contains(a.InternalName)))
             {
+                
                 listItem.Fields.Add(new FieldSelected() { Field = field, Selected = false });
             }
             SpContext.SelectedListItems.Add(listItem);
@@ -119,6 +120,7 @@ namespace SpproFramework.Migrate
                 }
                 foreach (var field in currentList.Fields.Where(a=>!a.Field.Hidden).OrderBy(a=>a.Field.Title).Distinct())
                 {
+            
                     CheckListSpFields.Items.Add(new CheckListItem() { Display = field.Field.Title + " (" + field.Field.InternalName + ")", Value = field.Field }, field.Selected);
                 }
                 Cursor.Current = Cursors.Default;

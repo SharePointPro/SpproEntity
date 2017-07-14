@@ -9,13 +9,15 @@ using SpproFramework.Utilities;
 using System.ComponentModel;
 using SpproFramework.Attributes;
 using System.Device.Location;
+using System.Web;
+using System.Net;
 
 
 namespace SpproFramework.Generic
 {
     public class SpproRepository
     {
-
+        
     }
     public class SpproRepository<T> : SpproRepository where T : ISpproEntity
     {
@@ -45,43 +47,77 @@ namespace SpproFramework.Generic
 
         #region Private Methods
 
+        private bool IsObjectFalsy(object obj)
+        {
+            int number;
+            if (int.TryParse(obj.ToString(), out number))
+            {
+                return number == 0;
+            }
+            return false;
+        }
+
         private ListItem SetValues(string[] keyValues, ListItem listItem, ref T sEntity)
         {
             foreach (var keyValue in keyValues)
             {
                 try
                 {
+                    bool readOnly = false;
                     var key = keyValue.Split('=')[0];
-                    var value = keyValue.Split('=')[1];
+                    var value = WebUtility.UrlDecode(keyValue.Split('=')[1]);                    
                     var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(key, typeof(T)));
-                    object finalValue = value;
-                    var targetType = IsNullableType(property.PropertyType) ? Nullable.GetUnderlyingType(property.PropertyType) : property.PropertyType;
-                    if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                    var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
+
+                    if (customAttributes.Count() > 0)
                     {
-                        var format = value.Split('[', ']')[1];
-                        value = value.Substring(0, value.IndexOf('['));
-                        var dateValue = DateTime.ParseExact(value, format, null);
-                        finalValue = dateValue;
-                        property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                        var attribute = (SpproFieldAttribute)customAttributes[0];
+                        readOnly = attribute.ReadOnly;
                     }
-                    if (property.PropertyType == typeof(GeoCoordinate))
+                    if (!readOnly)
                     {
-                        var latitude = Convert.ToDouble(value.Split(',')[0]);
-                        var longitude = Convert.ToDouble(value.Split(',')[1]);
-                        var geoValue = new FieldGeolocationValue();
-                        geoValue.Latitude = latitude;
-                        geoValue.Longitude = longitude;
-                        finalValue = geoValue;
-                        var geoLocation = new GeoCoordinate(latitude, longitude);
-                        property.SetValue(sEntity, Convert.ChangeType(geoLocation, targetType));
+
+                        object finalValue = value;
+                        var targetType = IsNullableType(property.PropertyType) ? Nullable.GetUnderlyingType(property.PropertyType) : property.PropertyType;
+                        if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                        {
+                            var format = value.Split('[', ']')[1];
+                            value = value.Substring(0, value.IndexOf('['));
+                            DateTime dateValue = new DateTime(); ;
+                            if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out dateValue))
+                            {
+                                finalValue = dateValue;
+                                property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else if (property.PropertyType == typeof(GeoCoordinate))
+                        {
+                            var latitude = Convert.ToDouble(value.Split(',')[0]);
+                            var longitude = Convert.ToDouble(value.Split(',')[1]);
+                            var geoValue = new FieldGeolocationValue();
+                            geoValue.Latitude = latitude;
+                            geoValue.Longitude = longitude;
+                            finalValue = geoValue;
+                            var geoLocation = new GeoCoordinate(latitude, longitude);
+                            property.SetValue(sEntity, Convert.ChangeType(geoLocation, targetType));
+                        }
+                        else if (property.PropertyType == typeof(Microsoft.SharePoint.Client.FieldUrlValue))
+                        {
+                            finalValue = new FieldUrlValue() { Description = value.Split(',')[0], Url = WebUtility.UrlDecode(value.Split(',')[1]) };
+                            property.SetValue(sEntity, finalValue);
+                        }
+                        else
+                        {
+                            property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                        }
+                        //Get SharePoint Field Name
+                        key = SpNameUtility.GetSPFieldName(key, typeof(T));
+                        listItem[key] = finalValue;
                     }
-                    else
-                    {
-                        property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
-                    }
-                    //Get SharePoint Field Name
-                    key = SpNameUtility.GetSPFieldName(key, typeof(T));
-                    listItem[key] = finalValue;
                 }
                 catch (Exception ex)
                 {
@@ -119,12 +155,9 @@ namespace SpproFramework.Generic
             entity.ID = item.Id;
             foreach (var field in item.FieldValues)
             {
+              
                 try
-                {
-                    if (field.Key == "ItemChildCount")
-                    {
-                        var tester = 5;
-                    }
+                {                    
                     var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(field.Key, typeof(T)));
                     if (property != null)
                     {
@@ -144,7 +177,6 @@ namespace SpproFramework.Generic
                             //Get the underlying type property instead of the nullable generic
                             targetType = new NullableConverter(property.PropertyType).UnderlyingType;
                         }
-
                         var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
                         if (customAttributes.Length > 0 && !string.IsNullOrWhiteSpace(((SpproFieldAttribute)customAttributes[0]).FieldType))
                         {
@@ -152,7 +184,7 @@ namespace SpproFramework.Generic
                             switch (attribute.FieldType)
                             {
                                 case "Lookup":
-                                    if (field.Value != null)
+                                    if (field.Value != null && !(IsObjectFalsy(field.Value)))
                                     {
                                         dynamic value;
                                         switch (attribute.FieldValue)
@@ -242,10 +274,7 @@ namespace SpproFramework.Generic
                                         property.SetValue(entity, Convert.ChangeType(field.Value, targetType));
                                         break;
                                 }
-
                             }
-
-
                         }
                     }
                 }
@@ -295,9 +324,13 @@ namespace SpproFramework.Generic
                     {
                         formData.Add(string.Format("{0}={1}[dd-MM-yyyy hh:mm tt]", name, ((DateTime?)value).Value.ToString("dd-MM-yyyy hh:mm tt")));
                     }
+                    else if (value is FieldUrlValue)
+                    {
+                        formData.Add(string.Format("{0}={1},{2}", name, ((FieldUrlValue)value).Description, WebUtility.UrlEncode(((FieldUrlValue)value).Url)));
+                    }
                     else
                     {
-                        formData.Add(string.Format("{0}={1}", name, value));
+                        formData.Add(string.Format("{0}={1}", name, WebUtility.UrlEncode(value.ToString())));
                     }
                 }
                 else if (name.ToLower() == "id")
@@ -326,34 +359,8 @@ namespace SpproFramework.Generic
             var sEntity = CreateInstance();
             var list = GetList();
             var listItem = list.GetItemById(id);
-
             var keyValues = formData.Split('&');
             listItem = SetValues(keyValues, listItem, ref sEntity);
-            //foreach (var keyValue in keyValues)
-            //{
-            //    var key = keyValue.Split('=')[0];
-            //    var value = keyValue.Split('=')[1];
-            //    try
-            //    {
-            //        var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(key, typeof(T)));
-            //        object finalValue = value;
-
-            //        if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
-            //        {
-            //            var format = value.Split('[', ']')[1];
-            //            value = value.Substring(0, value.IndexOf('['));
-            //            var dateValue = DateTime.ParseExact(value, format, null);
-            //            finalValue = dateValue;
-            //        }
-            //        property.SetValue(sEntity, finalValue);
-            //        listItem[key] = finalValue;
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        throw new Exception("error with " + key, ex);
-            //    }
-            //}
-
             listItem.Update();
             ClientContext.ExecuteQuery();
             return sEntity;
@@ -393,15 +400,30 @@ namespace SpproFramework.Generic
             return oListItem;
         }
 
-        public ListItem GetById(int id)
+        public T GetById(int id)
         {
             var list = GetList();
             var listItem = list.GetItemById(id);
             ClientContext.Load(listItem);
             ClientContext.ExecuteQuery();
-            return listItem;
+            return PopulateSEntity(listItem);
         }
 
+        public List<T> GetAll()
+        {
+            var list = GetList();
+            var itemList = new List<T>();
+            CamlQuery query = CamlQuery.CreateAllItemsQuery();
+            var listItems = list.GetItems(query);
+            ClientContext.Load(listItems);
+            ClientContext.ExecuteQuery();
+            foreach (var item in listItems)
+            {
+                itemList.Add(PopulateSEntity(item));
+            }
+            return itemList;
+
+        }
         #endregion
 
 

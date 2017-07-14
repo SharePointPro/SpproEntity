@@ -32,7 +32,7 @@ namespace SpproFramework.Utilities
 
         public static bool IsNumeric(PropertyInfo property)
         {
-            return IsNumeric(property.GetType());
+           return IsNumeric(property.PropertyType);
         }
     }
 }

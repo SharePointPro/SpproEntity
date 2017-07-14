@@ -23,5 +23,7 @@ namespace SpproFramework.Attributes
 
         public string SpName { get; set; }
 
+        public bool ReadOnly { get; set; }
+
     }
 }
