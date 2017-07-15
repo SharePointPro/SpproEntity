@@ -23,6 +23,7 @@ namespace SpproFramework.Extensions
             }
             cleanName = cleanName.Replace("(", "").Replace(")", "");
             cleanName = cleanName.Replace("%", "Percent");
+            cleanName = cleanName.Replace("-", "");
             return cleanName;
         }
 

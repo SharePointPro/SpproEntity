@@ -309,7 +309,7 @@ namespace SpproFramework.Generic
             return itemList;
         }
 
-        public T UpdateOrCreate(ISpproEntity entity)
+        public T UpdateOrCreate(T entity)
         {
             //Create Form Data from entity
             List<string> formData = new List<string>();

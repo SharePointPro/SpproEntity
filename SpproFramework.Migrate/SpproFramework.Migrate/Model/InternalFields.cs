@@ -76,7 +76,9 @@ namespace SpproFramework.Migrate.Model
                                                                     "xd_ProgID",
                                                                     "xd_Signature",
                                                                     "Combine",
-                                                                    "RepairDocument"
+                                                                    "RepairDocument",
+                                                                    "FolderChildCountID",
+                                                                    "ItemChildCountID"
         };
 
     }

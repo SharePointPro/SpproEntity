@@ -52,6 +52,7 @@
     <Compile Include="Generic\SpproRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\CamlUtility.cs" />
+    <Compile Include="Utilities\GeoUtility.cs" />
     <Compile Include="Utilities\SpNameUtility.cs" />
     <Compile Include="Utilities\TypeUtility.cs" />
   </ItemGroup>
