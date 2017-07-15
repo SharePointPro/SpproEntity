@@ -28,7 +28,14 @@ CRUD Actions has never been simpler.
                 SpContext.UpdateOrCreate(property); //Save Change back to SharePoint
             }   
         }
-```              
+```           
+
+# Requirements
+Your project must have the following References:
+* Microsoft.SharePoint.Client
+* Microsoft.SharePoint.Client.Runtime
+* System.Device.Location
+
 # More to come
 Sppro Entity is still very much a work in progress. If you have any suggestion please contact me via my webpage.
 See more here: http://www.sharepointpro.com.au
