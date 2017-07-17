@@ -36,6 +36,15 @@ Your project must have the following References:
 * Microsoft.SharePoint.Client.Runtime
 * System.Device.Location
 
+# Lazy Loading
+Sppro Entities include lazy loading, simply add a navigation property in the created model, decorate and the Sppro Entity Engine will automatically load objects during any GET call.
+
+Model Snippit Example:
+```
+    [SpproNavigationAttribute(NavigationProperty = true, LookupField="QuoteID")]
+    public virtual ICollection<QuoteRooms> QuoteRooms { get; set; }
+```
+
 # More to come
 Sppro Entity is still very much a work in progress. If you have any suggestion please contact me via my webpage.
 See more here: http://www.sharepointpro.com.au
