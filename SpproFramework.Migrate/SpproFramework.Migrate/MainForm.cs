@@ -293,6 +293,19 @@ namespace SpproFramework.Migrate
 
         #endregion
 
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            var fields = SpContext.SelectedListItems
+                                  .Where(a => a.SpList == CurrentList)
+                                  .FirstOrDefault()
+                                  .Fields
+                                  .Where(a => a.Selected)
+                                  .Select(a=>a.Field)
+                                  .ToList();
+            SiteContent siteContent = new SiteContent(fields);
+            siteContent.ShowDialog();
+        }
+
 
     }
 }

@@ -9,21 +9,23 @@ using SpproFramework.Utilities;
 using System.ComponentModel;
 using SpproFramework.Attributes;
 using System.Device.Location;
+using SpproFramework.Extensions;
 using System.Web;
 using System.Net;
-
 
 namespace SpproFramework.Generic
 {
     public class SpproRepository
     {
-        
+
     }
     public class SpproRepository<T> : SpproRepository where T : ISpproEntity
     {
         #region Private Members
 
         private string ListName { get; set; }
+
+        private bool LazyLoading = true;
 
         #endregion
 
@@ -65,7 +67,7 @@ namespace SpproFramework.Generic
                 {
                     bool readOnly = false;
                     var key = keyValue.Split('=')[0];
-                    var value = WebUtility.UrlDecode(keyValue.Split('=')[1]);                    
+                    var value = WebUtility.UrlDecode(keyValue.Split('=')[1]);
                     var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(key, typeof(T)));
                     var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
 
@@ -76,7 +78,6 @@ namespace SpproFramework.Generic
                     }
                     if (!readOnly)
                     {
-
                         object finalValue = value;
                         var targetType = IsNullableType(property.PropertyType) ? Nullable.GetUnderlyingType(property.PropertyType) : property.PropertyType;
                         if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
@@ -111,8 +112,11 @@ namespace SpproFramework.Generic
                             property.SetValue(sEntity, finalValue);
                         }
                         else
-                        {
-                            property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                        {                            
+                            if (!(finalValue.ToString() == "" && TypeUtility.IsNumeric(targetType)))
+                            {
+                                property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                            }
                         }
                         //Get SharePoint Field Name
                         key = SpNameUtility.GetSPFieldName(key, typeof(T));
@@ -155,9 +159,8 @@ namespace SpproFramework.Generic
             entity.ID = item.Id;
             foreach (var field in item.FieldValues)
             {
-              
                 try
-                {                    
+                {
                     var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(field.Key, typeof(T)));
                     if (property != null)
                     {
@@ -284,6 +287,34 @@ namespace SpproFramework.Generic
                 }
             }
 
+            //Populate Navigation Properties
+            //Beware this requries calls to SharePoint via ClientContext and too many may slow down application
+            if (LazyLoading)
+            {
+                foreach (var property in entity.GetType().GetProperties())
+                {
+                    var customAttributes = property.GetCustomAttributes(typeof(SpproNavigationAttribute), true);
+                    if (customAttributes.Length > 0 && ((SpproNavigationAttribute)customAttributes[0]).NavigationProperty)
+                    {
+                        var foriegnKey = ((SpproNavigationAttribute)customAttributes[0]).LookupField;
+                        
+                        var genericType = property.PropertyType.GetGenericArguments()[0];
+                        var repo = typeof(SpproRepository<>);
+                        var constructedRepoType = repo.MakeGenericType(genericType);
+                        var listName = genericType.Name;
+                        var genericAttributes = genericType.GetCustomAttributes(typeof(SpproListAttribute), true);
+                        if (genericAttributes.Length > 0 && !string.IsNullOrWhiteSpace(((SpproListAttribute)genericAttributes[0]).ListName))
+                        {
+                            listName = ((SpproListAttribute)genericAttributes[0]).ListName;
+                        }
+                        dynamic repoInstance = Activator.CreateInstance(constructedRepoType, listName, ClientContext);
+                        var values = repoInstance.Query(string.Format("{0}={1}",foriegnKey, entity.ID));
+                        property.SetValue(entity, values);
+                    }
+
+                }
+            }
+
             return entity;
         }
 
@@ -301,7 +332,6 @@ namespace SpproFramework.Generic
             var listItems = list.GetItems(camlQuery);
             ClientContext.Load(listItems);
             ClientContext.ExecuteQuery();
-
             foreach (var item in listItems)
             {
                 itemList.Add(PopulateSEntity(item));
@@ -359,13 +389,26 @@ namespace SpproFramework.Generic
             var sEntity = CreateInstance();
             var list = GetList();
             var listItem = list.GetItemById(id);
-            var keyValues = formData.Split('&');
+            var keyValues = formData.RemoveFromQueryString("id").Split('&');
             listItem = SetValues(keyValues, listItem, ref sEntity);
             listItem.Update();
             ClientContext.ExecuteQuery();
             return sEntity;
         }
 
+        public void Delete(string formData)
+        {            
+            var list = GetList();
+            var camlUtility = new CamlUtility<T>();
+            CamlQuery camlQuery = new CamlQuery();
+            camlQuery.ViewXml = camlUtility.GenerateFromQueryString(formData);
+            var listItems = list.GetItems(camlQuery);
+            foreach (var item in listItems)
+            {
+                item.DeleteObject();
+            }
+            ClientContext.ExecuteQuery();
+        }
         /// <summary>
         /// Create using Form Data
         /// </summary>

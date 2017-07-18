@@ -70,11 +70,18 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\CheckListItem.cs" />
+    <Compile Include="Model\ComboboxItem.cs" />
     <Compile Include="Model\InternalFields.cs" />
     <Compile Include="Model\SelectedLists.cs" />
     <Compile Include="Model\CheckFieldItem.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SiteContent.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SiteContent.Designer.cs">
+      <DependentUpon>SiteContent.cs</DependentUpon>
+    </Compile>
     <Compile Include="SpContext.cs" />
     <Compile Include="Utilities\PasswordUtils.cs" />
     <Compile Include="Utilities\SaveUtils.cs" />
@@ -96,6 +103,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="SiteContent.resx">
+      <DependentUpon>SiteContent.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

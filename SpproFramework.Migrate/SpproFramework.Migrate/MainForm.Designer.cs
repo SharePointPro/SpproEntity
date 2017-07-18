@@ -50,6 +50,7 @@
             this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.saveFile = new System.Windows.Forms.SaveFileDialog();
             this.openFile = new System.Windows.Forms.OpenFileDialog();
+            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
@@ -62,7 +63,7 @@
             this.CheckListSpLists.FormattingEnabled = true;
             this.CheckListSpLists.Location = new System.Drawing.Point(0, 124);
             this.CheckListSpLists.Name = "CheckListSpLists";
-            this.CheckListSpLists.Size = new System.Drawing.Size(881, 1239);
+            this.CheckListSpLists.Size = new System.Drawing.Size(881, 1197);
             this.CheckListSpLists.TabIndex = 0;
             this.CheckListSpLists.SelectedIndexChanged += new System.EventHandler(this.CheckListSpLists_SelectedIndexChanged);
             // 
@@ -74,7 +75,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1012, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(2384, 56);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -85,27 +86,27 @@
             this.openToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(87, 52);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(235, 54);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(235, 54);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(235, 54);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -114,13 +115,13 @@
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.comingSoonToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(107, 52);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // comingSoonToolStripMenuItem
             // 
             this.comingSoonToolStripMenuItem.Name = "comingSoonToolStripMenuItem";
-            this.comingSoonToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.comingSoonToolStripMenuItem.Size = new System.Drawing.Size(363, 54);
             this.comingSoonToolStripMenuItem.Text = "Coming Soon";
             // 
             // toolStrip1
@@ -132,10 +133,11 @@
             this.toolStripSave,
             this.toolStripButton1,
             this.toolStripButton2,
-            this.toolStripButton4});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 24);
+            this.toolStripButton4,
+            this.toolStripButton5});
+            this.toolStrip1.Location = new System.Drawing.Point(0, 56);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1012, 55);
+            this.toolStrip1.Size = new System.Drawing.Size(2384, 57);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -144,7 +146,7 @@
             this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
             this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(141, 52);
+            this.toolStripButton3.Size = new System.Drawing.Size(320, 54);
             this.toolStripButton3.Text = "Save CS Entities";
             this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
             // 
@@ -153,7 +155,7 @@
             this.toolStripOpen.Image = ((System.Drawing.Image)(resources.GetObject("toolStripOpen.Image")));
             this.toolStripOpen.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripOpen.Name = "toolStripOpen";
-            this.toolStripOpen.Size = new System.Drawing.Size(88, 52);
+            this.toolStripOpen.Size = new System.Drawing.Size(159, 52);
             this.toolStripOpen.Text = "Open";
             this.toolStripOpen.Click += new System.EventHandler(this.toolStripOpen_Click);
             // 
@@ -162,7 +164,7 @@
             this.toolStripSave.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSave.Image")));
             this.toolStripSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripSave.Name = "toolStripSave";
-            this.toolStripSave.Size = new System.Drawing.Size(83, 52);
+            this.toolStripSave.Size = new System.Drawing.Size(145, 52);
             this.toolStripSave.Text = "Save";
             this.toolStripSave.Click += new System.EventHandler(this.toolStripSave_Click);
             // 
@@ -171,7 +173,7 @@
             this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(104, 52);
+            this.toolStripButton1.Size = new System.Drawing.Size(203, 52);
             this.toolStripButton1.Text = "Connect";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
@@ -180,7 +182,7 @@
             this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
             this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(118, 52);
+            this.toolStripButton2.Size = new System.Drawing.Size(247, 52);
             this.toolStripButton2.Text = "Disconnect";
             this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
@@ -192,9 +194,9 @@
             // statusStrip1
             // 
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(48, 48);
-            this.statusStrip1.Location = new System.Drawing.Point(0, 711);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 1510);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1012, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(2384, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -204,9 +206,9 @@
             this.CheckListSpFields.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.CheckListSpFields.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.CheckListSpFields.FormattingEnabled = true;
-            this.CheckListSpFields.Location = new System.Drawing.Point(124, -236);
+            this.CheckListSpFields.Location = new System.Drawing.Point(810, 164);
             this.CheckListSpFields.Name = "CheckListSpFields";
-            this.CheckListSpFields.Size = new System.Drawing.Size(1292, 378);
+            this.CheckListSpFields.Size = new System.Drawing.Size(1292, 342);
             this.CheckListSpFields.TabIndex = 4;
             this.CheckListSpFields.UseTabStops = false;
             this.CheckListSpFields.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.CheckListSpFields_ItemCheck);
@@ -219,11 +221,20 @@
             // 
             this.openFile.FileName = "sppro.json";
             // 
+            // toolStripButton5
+            // 
+            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
+            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton5.Name = "toolStripButton5";
+            this.toolStripButton5.Size = new System.Drawing.Size(380, 54);
+            this.toolStripButton5.Text = "Create Site Content";
+            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.BackColor = System.Drawing.SystemColors.Window;
-            this.ClientSize = new System.Drawing.Size(1012, 733);
+            this.ClientSize = new System.Drawing.Size(2384, 1532);
             this.Controls.Add(this.CheckListSpFields);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
@@ -265,6 +276,7 @@
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
+        private System.Windows.Forms.ToolStripButton toolStripButton5;
     }
 }
 

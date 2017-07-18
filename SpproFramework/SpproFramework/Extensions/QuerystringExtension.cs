@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.SharePoint.Client.Utilities;
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,22 +16,23 @@ namespace SpproFramework.Extensions
         /// <param name="queryString"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static string RemoveFromQueryString(this string queryString, string value)
+        internal static string RemoveFromQueryString(this string queryString, string keyToRemove)
         {
-            if (queryString.Contains(value))
+            NameValueCollection queryParameters = new NameValueCollection();
+            string[] querySegments = queryString.Split('&');
+            foreach (string segment in querySegments)
             {
-                var startIndex = queryString.IndexOf(value);
-                var endIndex = queryString.IndexOf("&", queryString.IndexOf(value)) + 1;
-                if (endIndex == 0)
-                    endIndex = queryString.Count();
-
-                return queryString.Remove(startIndex, endIndex);
+                string[] parts = segment.Split('=');
+                if (parts.Length > 0)
+                {
+                    string key = parts[0].Trim(new char[] { '?', ' ' });
+                    string val = parts[1].Trim();
+                    queryParameters.Add(key, val);
+                }
             }
-            else
-            {
-                return queryString;
-            }
-
+            queryParameters.Remove(keyToRemove);
+            return String.Join("&",
+                        queryParameters.AllKeys.Select(a => a + "=" + (queryParameters[a])));
         }
 
     }
