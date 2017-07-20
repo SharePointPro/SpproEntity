@@ -393,6 +393,7 @@ namespace SpproFramework.Generic
             listItem = SetValues(keyValues, listItem, ref sEntity);
             listItem.Update();
             ClientContext.ExecuteQuery();
+            sEntity.ID = id;
             return sEntity;
         }
 
@@ -403,7 +404,9 @@ namespace SpproFramework.Generic
             CamlQuery camlQuery = new CamlQuery();
             camlQuery.ViewXml = camlUtility.GenerateFromQueryString(formData);
             var listItems = list.GetItems(camlQuery);
-            foreach (var item in listItems)
+            ClientContext.Load(listItems);
+            ClientContext.ExecuteQuery();
+            foreach (var item in listItems.ToList())
             {
                 item.DeleteObject();
             }

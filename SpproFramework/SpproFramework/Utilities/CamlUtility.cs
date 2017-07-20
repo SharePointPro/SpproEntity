@@ -80,38 +80,40 @@ namespace SpproFramework.Utilities
                     if (keyValue.Contains("="))
                     {
                         var key = keyValue.Split('=')[0];
-                        var value = keyValue.Split('=')[1];
-                        var spFieldType = GetFieldType(key);
-                        var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
-
-                        var xmlElement = new XElement("Eq",
-                                              new XElement("FieldRef",
-                                                  new XAttribute("Name", spFieldName),
-                                                        spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
-                                                  new XElement("Value",
-                                                    new XAttribute("Type", spFieldType), value)
-                                                       );
-
-                        if (currentDelimiter != "")
+                        if (key != "_")
                         {
-                            switch (currentDelimiter)
-                            {
-                                case "&":
-                                    xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
-                                    break;
+                            var value = keyValue.Split('=')[1];
+                            var spFieldType = GetFieldType(key);
+                            var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
 
-                                case "||":
-                                    xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
-                                    break;
+                            var xmlElement = new XElement("Eq",
+                                                  new XElement("FieldRef",
+                                                      new XAttribute("Name", spFieldName),
+                                                            spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
+                                                      new XElement("Value",
+                                                        new XAttribute("Type", spFieldType), value)
+                                                           );
+
+                            if (currentDelimiter != "")
+                            {
+                                switch (currentDelimiter)
+                                {
+                                    case "&":
+                                        xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
+                                        break;
+
+                                    case "||":
+                                        xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                xDoc.Add(
+                                    xmlElement
+                                );
                             }
                         }
-                        else
-                        {
-                            xDoc.Add(
-                                xmlElement
-                            );
-                        }
-
                     }
                 }
 
