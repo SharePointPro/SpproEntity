@@ -99,7 +99,6 @@ namespace SpproFramework.Migrate
             SpContext.ClientContext.ExecuteQuery();
             foreach (var field in spList.Fields.Where(a=> !InternalFields.List.Contains(a.InternalName)))
             {
-                
                 listItem.Fields.Add(new FieldSelected() { Field = field, Selected = false });
             }
             SpContext.SelectedListItems.Add(listItem);

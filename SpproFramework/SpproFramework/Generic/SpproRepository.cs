@@ -12,6 +12,8 @@ using System.Device.Location;
 using SpproFramework.Extensions;
 using System.Web;
 using System.Net;
+using SpproFramework.Model;
+using System.IO;
 
 namespace SpproFramework.Generic
 {
@@ -22,7 +24,6 @@ namespace SpproFramework.Generic
     public class SpproRepository<T> : SpproRepository where T : ISpproEntity
     {
         #region Private Members
-
         private string ListName { get; set; }
 
         private bool LazyLoading = true;
@@ -34,7 +35,7 @@ namespace SpproFramework.Generic
         internal string SiteUrl { get; set; }
 
         internal ClientContext ClientContext { get; set; }
-
+     
         #endregion
 
         #region Constructors
@@ -112,7 +113,7 @@ namespace SpproFramework.Generic
                             property.SetValue(sEntity, finalValue);
                         }
                         else
-                        {                            
+                        {
                             if (!(finalValue.ToString() == "" && TypeUtility.IsNumeric(targetType)))
                             {
                                 property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
@@ -186,6 +187,21 @@ namespace SpproFramework.Generic
                             var attribute = (SpproFieldAttribute)customAttributes[0];
                             switch (attribute.FieldType)
                             {
+                                case "File":
+                                    Microsoft.SharePoint.Client.File file = item.File;
+                                    SpproFile spproFile = new SpproFile();
+                                    var fileStream = file.OpenBinaryStream();                                    
+                                    ClientContext.Load(file);
+                                    ClientContext.ExecuteQuery();
+                                    using (var ms = new MemoryStream())
+                                    {
+                                        fileStream.Value.CopyTo(ms);
+                                        spproFile.Content = ms.ToArray();
+                                        spproFile.FileName = item.File.Name;
+                                        property.SetValue(entity, spproFile);
+                                    }
+                                    break;
+
                                 case "Lookup":
                                     if (field.Value != null && !(IsObjectFalsy(field.Value)))
                                     {
@@ -219,12 +235,18 @@ namespace SpproFramework.Generic
                                         switch (attribute.FieldValue)
                                         {
                                             case "Value":
-                                                value = ((FieldUserValue[])field.Value).Select(a => a.LookupValue).ToList();
+                                                if (field.Value is FieldUserValue[])
+                                                {
+                                                    value = ((FieldUserValue[])field.Value).Select(a => a.LookupValue).ToList();
+                                                }
+                                                else
+                                                {
+                                                    value = ((FieldUserValue)field.Value).LookupValue;
+                                                }
                                                 property.SetValue(entity, value);
                                                 break;
                                             case "IdAndValue":
-                                                value = ((IEnumerable<dynamic>)((FieldUserValue[])field.Value).Select(a => new { a.LookupId, a.LookupValue })).ToList();
-                                                property.SetValue(entity, value);
+                                                property.SetValue(entity, field.Value);
                                                 break;
                                             default:
                                             case "Id":
@@ -258,10 +280,14 @@ namespace SpproFramework.Generic
                                 switch (targetType.Name)
                                 {
                                     case "GeoCoordinate":
-                                        GeoCoordinate GeoValue = new GeoCoordinate();
-                                        GeoValue.Longitude = ((FieldGeolocationValue)field.Value).Longitude;
-                                        GeoValue.Latitude = ((FieldGeolocationValue)field.Value).Latitude;
-                                        property.SetValue(entity, GeoValue);
+                                        if (field.Value != null)
+                                        {
+                                            GeoCoordinate GeoValue = new GeoCoordinate();
+                                            GeoValue.Longitude = ((FieldGeolocationValue)field.Value).Longitude;
+                                            GeoValue.Latitude = ((FieldGeolocationValue)field.Value).Latitude;
+                                            GeoValue.Altitude = 0;
+                                            property.SetValue(entity, GeoValue);
+                                        }
                                         break;
                                     case "Boolean":
                                         if (field.Value == null)
@@ -297,7 +323,7 @@ namespace SpproFramework.Generic
                     if (customAttributes.Length > 0 && ((SpproNavigationAttribute)customAttributes[0]).NavigationProperty)
                     {
                         var foriegnKey = ((SpproNavigationAttribute)customAttributes[0]).LookupField;
-                        
+
                         var genericType = property.PropertyType.GetGenericArguments()[0];
                         var repo = typeof(SpproRepository<>);
                         var constructedRepoType = repo.MakeGenericType(genericType);
@@ -308,7 +334,7 @@ namespace SpproFramework.Generic
                             listName = ((SpproListAttribute)genericAttributes[0]).ListName;
                         }
                         dynamic repoInstance = Activator.CreateInstance(constructedRepoType, listName, ClientContext);
-                        var values = repoInstance.Query(string.Format("{0}={1}",foriegnKey, entity.ID));
+                        var values = repoInstance.Query(string.Format("{0}={1}", foriegnKey, entity.ID));
                         property.SetValue(entity, values);
                     }
 
@@ -384,11 +410,19 @@ namespace SpproFramework.Generic
         /// <param name="id"></param>
         /// <param name="formDaa"></param>
         /// <returns></returns>
-        public T Update(int id, string formData)
+        public T Update(int id, string formData, string user = "")
         {
             var sEntity = CreateInstance();
             var list = GetList();
             var listItem = list.GetItemById(id);
+            if (!string.IsNullOrWhiteSpace(user))
+            {
+                User modifiedUser = ClientContext.Web.EnsureUser(user);
+                ClientContext.Load(modifiedUser);
+                ClientContext.ExecuteQuery();
+                listItem["Author"] = modifiedUser;
+                listItem["Editor"] = modifiedUser;
+            }
             var keyValues = formData.RemoveFromQueryString("id").Split('&');
             listItem = SetValues(keyValues, listItem, ref sEntity);
             listItem.Update();
@@ -398,7 +432,7 @@ namespace SpproFramework.Generic
         }
 
         public void Delete(string formData)
-        {            
+        {
             var list = GetList();
             var camlUtility = new CamlUtility<T>();
             CamlQuery camlQuery = new CamlQuery();
@@ -418,13 +452,21 @@ namespace SpproFramework.Generic
         /// <param name="id"></param>
         /// <param name="formDaa"></param>
         /// <returns></returns>
-        public T Create(string formData)
+        public T Create(string formData, string user = "")
         {
             var sEntity = CreateInstance();
             var list = GetList();
             this.ClientContext.Load(list);
             var listItem = CreateListItem();
             var keyValues = formData.Split('&');
+            if (!string.IsNullOrWhiteSpace(user))
+            {
+                User modifiedUser = ClientContext.Web.EnsureUser(user);
+                ClientContext.Load(modifiedUser);
+                ClientContext.ExecuteQuery();
+                listItem["Author"] = modifiedUser;
+                listItem["Editor"] = modifiedUser;
+            }
             listItem = SetValues(keyValues, listItem, ref sEntity);
             listItem.Update();
             ClientContext.ExecuteQuery();
@@ -453,6 +495,27 @@ namespace SpproFramework.Generic
             ClientContext.Load(listItem);
             ClientContext.ExecuteQuery();
             return PopulateSEntity(listItem);
+        }
+
+        /// <summary>
+        /// Search Document Library for file based on filename
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public List<T> GetByFileName(string fileName)
+        {
+            var list = GetList();
+            var itemList = new List<T>();
+            CamlQuery query = new CamlQuery();
+            query.ViewXml = string.Format("<View Scope=\"RecursiveAll\"><Query><Where><Eq><FieldRef Name='FileLeafRef' /><Value Type='File'>{0}</Value></Eq></Where></Query></View>", fileName);
+            var listItems = list.GetItems(query);
+            ClientContext.Load(listItems);
+            ClientContext.ExecuteQuery();
+            foreach (var item in listItems)
+            {
+                itemList.Add(PopulateSEntity(item));
+            }
+            return itemList;
         }
 
         public List<T> GetAll()
