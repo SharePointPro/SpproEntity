@@ -75,48 +75,63 @@ namespace SpproFramework.Utilities
                 }
                 else
                 {
+
                     var keyValue = keyValues[i];
-                    //Equal Operator
-                    if (keyValue.Contains("="))
+                    string operatorType = "", operatorString = "";
+                    //Less than or Equal To
+                    if (keyValue.Contains(">="))
                     {
-                        var key = keyValue.Split('=')[0];
-                        if (key != "_")
+                        operatorString = "Leq";
+                        operatorType = ">=";
+                    }
+                    //Greater than or Equal To
+                    else if (keyValue.Contains("<="))
+                    {
+                        operatorString = "Geq";
+                        operatorType = "<=";                        
+                    }
+                    //Equal Operator
+                    else if (keyValue.Contains("="))
+                    {
+                        operatorString = "eq";
+                        operatorType = "=";
+                    }
+                    var key = keyValue.Split(new string[] { operatorType }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    if (key != "_")
+                    {
+                        var value = keyValue.Split('=')[1];
+                        var spFieldType = GetFieldType(key);
+                        var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
+
+                        var xmlElement = new XElement(operatorString,
+                                              new XElement("FieldRef",
+                                                  new XAttribute("Name", spFieldName),
+                                                        spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
+                                                  new XElement("Value",
+                                                    new XAttribute("Type", spFieldType), value)
+                                                       );
+
+                        if (currentDelimiter != "")
                         {
-                            var value = keyValue.Split('=')[1];
-                            var spFieldType = GetFieldType(key);
-                            var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
-
-                            var xmlElement = new XElement("Eq",
-                                                  new XElement("FieldRef",
-                                                      new XAttribute("Name", spFieldName),
-                                                            spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
-                                                      new XElement("Value",
-                                                        new XAttribute("Type", spFieldType), value)
-                                                           );
-
-                            if (currentDelimiter != "")
+                            switch (currentDelimiter)
                             {
-                                switch (currentDelimiter)
-                                {
-                                    case "&":
-                                        xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
-                                        break;
+                                case "&":
+                                    xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
+                                    break;
 
-                                    case "||":
-                                        xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
-                                        break;
-                                }
+                                case "||":
+                                    xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
+                                    break;
                             }
-                            else
-                            {
-                                xDoc.Add(
-                                    xmlElement
-                                );
-                            }
+                        }
+                        else
+                        {
+                            xDoc.Add(
+                                xmlElement
+                            );
                         }
                     }
                 }
-
             }
 
             if (RecursiveView())

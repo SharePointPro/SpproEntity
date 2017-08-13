@@ -17,38 +17,19 @@ using System.IO;
 
 namespace SpproFramework.Generic
 {
-    public class SpproRepository
+    public class SpproRepository<T> : SpproBaseRepository where T : ISpproEntity
     {
-
-    }
-    public class SpproRepository<T> : SpproRepository where T : ISpproEntity
-    {
-        #region Private Members
-        private string ListName { get; set; }
-
-        private bool LazyLoading = true;
-
-        #endregion
-
-        #region Internals Members
-
-        internal string SiteUrl { get; set; }
-
-        internal ClientContext ClientContext { get; set; }
-     
-        #endregion
 
         #region Constructors
 
-        public SpproRepository(string listName, ClientContext clientContext)
+        public SpproRepository(string listName, ClientContext clientContext) 
+            : base(listName, clientContext)
         {
-            this.ListName = listName;
-            this.ClientContext = clientContext;
         }
 
         #endregion
 
-        #region Private Methods
+                #region Private Methods
 
         private bool IsObjectFalsy(object obj)
         {
@@ -404,6 +385,22 @@ namespace SpproFramework.Generic
             }
         }
 
+        public int GetMaxID()
+        {
+            var list = GetList();
+            var itemList = new List<T>();
+            CamlQuery query = new CamlQuery();
+            query.ViewXml = string.Format("<View><Query><OrderBy><FieldRef Name='ID' Ascending='False'/></OrderBy><Where><Neq><FieldRef Name='Title' />12908129sadkljc18<Value Type='Text'></Value></Neq></Where></Query><RowLimit>1</RowLimit></View>");
+            var listItems = list.GetItems(query);
+            ClientContext.Load(listItems);
+            ClientContext.ExecuteQuery();
+            foreach (var item in listItems)
+            {
+                itemList.Add(PopulateSEntity(item));
+            }
+            return itemList[0].ID; 
+        }
+
         /// <summary>
         /// Update using Form Data
         /// </summary>
@@ -534,6 +531,7 @@ namespace SpproFramework.Generic
 
         }
         #endregion
+    }
 
 
     }

@@ -31,7 +31,7 @@ namespace SpproFramework.Generic
             var type = this.GetType();
             foreach (var property in type.GetProperties())
             {
-                if (typeof(SpproRepository).IsAssignableFrom(property.PropertyType))
+                if (typeof(SpproBaseRepository).IsAssignableFrom(property.PropertyType))
                 {
                     var listType = typeof(SpproRepository<>);
                     var genericArgs = property.PropertyType.GetGenericArguments();

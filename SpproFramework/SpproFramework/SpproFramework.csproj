@@ -57,6 +57,8 @@
     <Compile Include="Extensions\StringExtension.cs" />
     <Compile Include="Generic\ISpproEntity.cs" />
     <Compile Include="Generic\SpproBaseContext.cs" />
+    <Compile Include="Generic\SpproBaseRepository.cs" />
+    <Compile Include="Generic\SpproDocLibraryRepository.cs" />
     <Compile Include="Generic\SpproRepository.cs" />
     <Compile Include="Json\LawAbidingFloatConverter.cs" />
     <Compile Include="Json\SpproSerialize.cs" />
