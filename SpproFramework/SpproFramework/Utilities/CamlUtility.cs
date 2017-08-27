@@ -17,6 +17,7 @@ namespace SpproFramework.Utilities
 
         private string GetFieldType(string propertyName)
         {
+            propertyName = propertyName.Trim();
             var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(propertyName, typeof(T)), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
             string spFieldType;
             var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
@@ -31,12 +32,13 @@ namespace SpproFramework.Utilities
                 {
                     spFieldType = "Number";
                 }
-                else if (property.GetType() == typeof(DateTime) || property.GetType() == typeof(DateTime?))
+                else if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
                 {
                     spFieldType = "DateTime";
                 }
                 else
                 {
+                    var test = property.PropertyType;
                     //TO DO. Add all field types
                     spFieldType = "Text";
                 }
@@ -64,76 +66,79 @@ namespace SpproFramework.Utilities
             var keyValues = Regex.Split(queryString, @"(\&|\|\|)");
             var xDoc = new XDocument();
             var currentDelimiter = "";
-
-            for (int i = 0; i < keyValues.Count(); i++)
+            if (!string.IsNullOrWhiteSpace(queryString))
             {
-                var isDelimiter = (i + 1) % 2 == 0;
 
-                if (isDelimiter)
+
+                for (int i = 0; i < keyValues.Count(); i++)
                 {
-                    currentDelimiter = keyValues[i];
-                }
-                else
-                {
+                    var isDelimiter = (i + 1) % 2 == 0;
 
-                    var keyValue = keyValues[i];
-                    string operatorType = "", operatorString = "";
-                    //Less than or Equal To
-                    if (keyValue.Contains(">="))
+                    if (isDelimiter)
                     {
-                        operatorString = "Leq";
-                        operatorType = ">=";
+                        currentDelimiter = keyValues[i];
                     }
-                    //Greater than or Equal To
-                    else if (keyValue.Contains("<="))
+                    else
                     {
-                        operatorString = "Geq";
-                        operatorType = "<=";                        
-                    }
-                    //Equal Operator
-                    else if (keyValue.Contains("="))
-                    {
-                        operatorString = "eq";
-                        operatorType = "=";
-                    }
-                    var key = keyValue.Split(new string[] { operatorType }, StringSplitOptions.RemoveEmptyEntries)[0];
-                    if (key != "_")
-                    {
-                        var value = keyValue.Split('=')[1];
-                        var spFieldType = GetFieldType(key);
-                        var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
 
-                        var xmlElement = new XElement(operatorString,
-                                              new XElement("FieldRef",
-                                                  new XAttribute("Name", spFieldName),
-                                                        spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
-                                                  new XElement("Value",
-                                                    new XAttribute("Type", spFieldType), value)
-                                                       );
-
-                        if (currentDelimiter != "")
+                        var keyValue = keyValues[i];
+                        string operatorType = "", operatorString = "";
+                        //Less than or Equal To
+                        if (keyValue.Contains("<="))
                         {
-                            switch (currentDelimiter)
-                            {
-                                case "&":
-                                    xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
-                                    break;
-
-                                case "||":
-                                    xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
-                                    break;
-                            }
+                            operatorString = "Leq";
+                            operatorType = "<=";
                         }
-                        else
+                        //Greater than or Equal To
+                        else if (keyValue.Contains(">="))
                         {
-                            xDoc.Add(
-                                xmlElement
-                            );
+                            operatorString = "Geq";
+                            operatorType = ">=";
+                        }
+                        //Equal Operator
+                        else if (keyValue.Contains("="))
+                        {
+                            operatorString = "Eq";
+                            operatorType = "=";
+                        }
+                        var key = keyValue.Split(new string[] { operatorType }, StringSplitOptions.RemoveEmptyEntries)[0];
+                        if (key != "_")
+                        {
+                            var value = keyValue.Split('=')[1];
+                            var spFieldType = GetFieldType(key);
+                            var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
+
+                            var xmlElement = new XElement(operatorString,
+                                                  new XElement("FieldRef",
+                                                      new XAttribute("Name", spFieldName),
+                                                            spFieldType == "Lookup" ? new XAttribute("LookupId", "True") : new XAttribute("LookupId", "False")),
+                                                      new XElement("Value",
+                                                        new XAttribute("Type", spFieldType), value)
+                                                           );
+
+                            if (currentDelimiter != "")
+                            {
+                                switch (currentDelimiter)
+                                {
+                                    case "&":
+                                        xDoc = new XDocument(new XElement("And", xDoc.Root, xmlElement));
+                                        break;
+
+                                    case "||":
+                                        xDoc = new XDocument(new XElement("Or", xDoc.Root, xmlElement));
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                xDoc.Add(
+                                    xmlElement
+                                );
+                            }
                         }
                     }
                 }
             }
-
             if (RecursiveView())
             {
                 return new XDocument(new XElement("View",

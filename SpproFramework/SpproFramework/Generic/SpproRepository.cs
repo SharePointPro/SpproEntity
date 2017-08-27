@@ -22,14 +22,14 @@ namespace SpproFramework.Generic
 
         #region Constructors
 
-        public SpproRepository(string listName, ClientContext clientContext) 
+        public SpproRepository(string listName, ClientContext clientContext)
             : base(listName, clientContext)
         {
         }
 
         #endregion
 
-                #region Private Methods
+        #region Private Methods
 
         private bool IsObjectFalsy(object obj)
         {
@@ -171,7 +171,7 @@ namespace SpproFramework.Generic
                                 case "File":
                                     Microsoft.SharePoint.Client.File file = item.File;
                                     SpproFile spproFile = new SpproFile();
-                                    var fileStream = file.OpenBinaryStream();                                    
+                                    var fileStream = file.OpenBinaryStream();
                                     ClientContext.Load(file);
                                     ClientContext.ExecuteQuery();
                                     using (var ms = new MemoryStream())
@@ -398,7 +398,7 @@ namespace SpproFramework.Generic
             {
                 itemList.Add(PopulateSEntity(item));
             }
-            return itemList[0].ID; 
+            return itemList[0].ID;
         }
 
         /// <summary>
@@ -471,20 +471,6 @@ namespace SpproFramework.Generic
             return sEntity;
         }
 
-        public List GetList()
-        {
-            List oList = ClientContext.Web.Lists.GetByTitle(ListName);
-            return oList;
-        }
-
-        public ListItem CreateListItem()
-        {
-            var oList = GetList();
-            ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
-            ListItem oListItem = oList.AddItem(itemCreateInfo);
-            return oListItem;
-        }
-
         public T GetById(int id)
         {
             var list = GetList();
@@ -494,26 +480,6 @@ namespace SpproFramework.Generic
             return PopulateSEntity(listItem);
         }
 
-        /// <summary>
-        /// Search Document Library for file based on filename
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        public List<T> GetByFileName(string fileName)
-        {
-            var list = GetList();
-            var itemList = new List<T>();
-            CamlQuery query = new CamlQuery();
-            query.ViewXml = string.Format("<View Scope=\"RecursiveAll\"><Query><Where><Eq><FieldRef Name='FileLeafRef' /><Value Type='File'>{0}</Value></Eq></Where></Query></View>", fileName);
-            var listItems = list.GetItems(query);
-            ClientContext.Load(listItems);
-            ClientContext.ExecuteQuery();
-            foreach (var item in listItems)
-            {
-                itemList.Add(PopulateSEntity(item));
-            }
-            return itemList;
-        }
 
         public List<T> GetAll()
         {
@@ -534,5 +500,4 @@ namespace SpproFramework.Generic
     }
 
 
-    }
 }

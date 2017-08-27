@@ -64,5 +64,17 @@ namespace SpproFramework.Extensions
             securePassword.MakeReadOnly();
             return securePassword;
         }
+
+        public static string TrimLastCharacter(this String str)
+        {
+            if (String.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+            else
+            {
+                return str.TrimEnd(str[str.Length - 1]);
+            }
+        }
     }
 }
