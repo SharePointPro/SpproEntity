@@ -33,6 +33,8 @@ namespace SpproFramework.Migrate
                 SpContext.ClientContext = new Microsoft.SharePoint.Client.ClientContext(textUrl.Text);
                 if (radioSpOnPrem.Checked)
                 {
+                    //To Do, this should be wrapped in an option "Apply Mithed Authentication"
+                    SpContext.ClientContext.ExecutingWebRequest += new EventHandler<WebRequestEventArgs>(Headers.MixedAuthentication.ctx_MixedAuthRequest);
                     SpContext.ClientContext.Credentials = new NetworkCredential(textUsername.Text, textPassword.Text, txtDomain.Text);
                 }
                 else

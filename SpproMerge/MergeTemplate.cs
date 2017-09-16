@@ -42,11 +42,27 @@ namespace SpproMerge
 
         #region Public Methods
 
-        public void Add(string name, object value)
+        public void AddString(string name, object value)
         {
             if (value != null)
             {
                 this.MergePair.Add(new MergePair(name, value.ToString()));
+            }
+            else
+            {
+                this.MergePair.Add(new MergePair(name, string.Empty));
+            }
+        }
+
+        public void Add(string name, DataItem value)
+        {
+            if (value != null)
+            {
+                this.MergePair.Add(new MergePair(name, value));
+            }
+            else
+            {
+                this.MergePair.Add(new MergePair(name, string.Empty));
             }
         }
 

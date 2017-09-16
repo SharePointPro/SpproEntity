@@ -2,12 +2,14 @@
 using Newtonsoft.Json;
 using SpproFramework.Migrate.Model;
 using SpproFramework.Migrate.Utilities;
+using SpproFramework.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -97,7 +99,7 @@ namespace SpproFramework.Migrate
 
             SpContext.ClientContext.Load(spList.Fields);
             SpContext.ClientContext.ExecuteQuery();
-            foreach (var field in spList.Fields.Where(a=> !InternalFields.List.Contains(a.InternalName)))
+            foreach (var field in spList.Fields.Where(a => !InternalFields.List.Contains(a.InternalName)))
             {
                 listItem.Fields.Add(new FieldSelected() { Field = field, Selected = false });
             }
@@ -117,9 +119,9 @@ namespace SpproFramework.Migrate
                 {
                     currentList = LoadListFromSp(spList);
                 }
-                foreach (var field in currentList.Fields.Where(a=>!a.Field.Hidden).OrderBy(a=>a.Field.Title).Distinct())
+                foreach (var field in currentList.Fields.Where(a => !a.Field.Hidden).OrderBy(a => a.Field.Title).Distinct())
                 {
-            
+
                     CheckListSpFields.Items.Add(new CheckListItem() { Display = field.Field.Title + " (" + field.Field.InternalName + ")", Value = field.Field }, field.Selected);
                 }
                 Cursor.Current = Cursors.Default;
@@ -259,7 +261,7 @@ namespace SpproFramework.Migrate
             }
             CheckListSpFields_ItemCheck_Disabled = false;
             CheckListSpLists_SelectedIndexChanged_Disabled = false;
-            
+
             Cursor.Current = Cursors.Default;
         }
 
@@ -299,12 +301,20 @@ namespace SpproFramework.Migrate
                                   .FirstOrDefault()
                                   .Fields
                                   .Where(a => a.Selected)
-                                  .Select(a=>a.Field)
+                                  .Select(a => a.Field)
                                   .ToList();
             SiteContent siteContent = new SiteContent(fields);
             siteContent.ShowDialog();
         }
 
+        private void addRemoteReceiverToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var eventReceiverUtility = new EventReceiverUtility(SpContext.ClientContext);
+            eventReceiverUtility.Bind(SpContext.ClientContext, "Quotes", "ListItemUpdated", "https://seymour.sharepointpro.com.au/Services/ListItemUpdated.svc", 1500, EventReceiverType.ItemUpdated);
+            //eventReceiverUtility.UnBind(SpContext.ClientContext, "Quotes", "ListItemUpdated");
+        }
+
 
     }
+
 }

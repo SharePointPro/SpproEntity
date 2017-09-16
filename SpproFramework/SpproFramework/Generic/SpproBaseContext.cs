@@ -49,7 +49,7 @@ namespace SpproFramework.Generic
             //Mixed authentication was causing problems so manually set to windows auth
             if (authMode == AuthMode.Windows)
             {
-                ClientContext.ExecutingWebRequest += new EventHandler<WebRequestEventArgs>(ctx_MixedAuthRequest);
+                ClientContext.ExecutingWebRequest += new EventHandler<WebRequestEventArgs>(Headers.MixedAuthentication.ctx_MixedAuthRequest);
             }
 
             var type = this.GetType();
@@ -73,23 +73,6 @@ namespace SpproFramework.Generic
                 }
             }
         }
-        #endregion
-
-        #region Private Methods
-
-        //Event Handler
-        void ctx_MixedAuthRequest(object sender, WebRequestEventArgs e)
-        {
-            try
-            {
-                //Add the header that tells SharePoint to use Windows authentication.
-                e.WebRequestExecutor.RequestHeaders.Add("X-FORMS_BASED_AUTH_ACCEPTED", "f");
-            }
-            catch (Exception ex)
-            {
-            }
-        }
-
         #endregion
 
         #region Public Methods

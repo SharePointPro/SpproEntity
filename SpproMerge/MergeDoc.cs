@@ -38,6 +38,7 @@ namespace SpproMerge
             {
                 dds[placeHolder.PlaceHolder] = placeHolder.Value;
             }
+
             foreach (var color in this.MergeTemplate.RemoveColor)
             {
                 dds[color] = new ColoredDataItem { Action = ColorAction.Remove };
@@ -67,6 +68,7 @@ namespace SpproMerge
                         processedStream.CopyTo(tempStream);
                     }
                 }
+                
                 return tempStream.ToArray();
             }
         }

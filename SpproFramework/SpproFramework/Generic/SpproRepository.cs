@@ -88,6 +88,12 @@ namespace SpproFramework.Generic
                             var geoLocation = new GeoCoordinate(latitude, longitude);
                             property.SetValue(sEntity, Convert.ChangeType(geoLocation, targetType));
                         }
+                        else if (property.PropertyType == typeof(Microsoft.SharePoint.Client.FieldLookupValue))
+                        {
+                            finalValue = new FieldLookupValue();
+                            ((FieldLookupValue)finalValue).LookupId = Convert.ToInt32(value);
+                            property.SetValue(sEntity, finalValue);
+                        }
                         else if (property.PropertyType == typeof(Microsoft.SharePoint.Client.FieldUrlValue))
                         {
                             finalValue = new FieldUrlValue() { Description = value.Split(',')[0], Url = WebUtility.UrlDecode(value.Split(',')[1]) };
@@ -189,6 +195,9 @@ namespace SpproFramework.Generic
                                         dynamic value;
                                         switch (attribute.FieldValue)
                                         {
+                                            case "IdAndValue":
+                                                property.SetValue(entity, field.Value);
+                                                break;
                                             case "Value":
                                                 value = ((FieldLookupValue)field.Value).LookupId;
                                                 property.SetValue(entity, value);
@@ -338,6 +347,7 @@ namespace SpproFramework.Generic
             camlQuery.ViewXml = camlUtility.GenerateFromQueryString(queryString);
             var listItems = list.GetItems(camlQuery);
             ClientContext.Load(listItems);
+            ClientContext.Load(listItems, items => items.Include(item => item.FieldValuesAsText));
             ClientContext.ExecuteQuery();
             foreach (var item in listItems)
             {
@@ -481,6 +491,7 @@ namespace SpproFramework.Generic
         }
 
 
+
         public List<T> GetAll()
         {
             var list = GetList();
@@ -496,6 +507,7 @@ namespace SpproFramework.Generic
             return itemList;
 
         }
+
         #endregion
     }
 
