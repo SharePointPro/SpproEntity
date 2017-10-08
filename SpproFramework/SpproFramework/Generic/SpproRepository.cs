@@ -175,6 +175,7 @@ namespace SpproFramework.Generic
                             switch (attribute.FieldType)
                             {
                                 case "File":
+                                    #region File Type
                                     Microsoft.SharePoint.Client.File file = item.File;
                                     SpproFile spproFile = new SpproFile();
                                     var fileStream = file.OpenBinaryStream();
@@ -187,9 +188,11 @@ namespace SpproFramework.Generic
                                         spproFile.FileName = item.File.Name;
                                         property.SetValue(entity, spproFile);
                                     }
+                                    #endregion
                                     break;
 
                                 case "Lookup":
+                                #region Lookup Type
                                     if (field.Value != null && !(IsObjectFalsy(field.Value)))
                                     {
                                         dynamic value;
@@ -216,9 +219,11 @@ namespace SpproFramework.Generic
                                                 break;
                                         }
                                     }
+                                    #endregion
                                     break;
 
                                 case "User":
+                                #region User Type
                                     if (field.Value != null)
                                     {
                                         dynamic value;
@@ -254,6 +259,11 @@ namespace SpproFramework.Generic
                                                 break;
                                         }
                                     }
+                                #endregion                              
+                                    break;
+
+                                case "Multi-Choice":
+                                    property.SetValue(entity, (string[])field.Value);
                                     break;
                             }
                         }
@@ -346,8 +356,9 @@ namespace SpproFramework.Generic
             CamlQuery camlQuery = new CamlQuery();
             camlQuery.ViewXml = camlUtility.GenerateFromQueryString(queryString);
             var listItems = list.GetItems(camlQuery);
+            ClientContext.RequestTimeout = -1;
             ClientContext.Load(listItems);
-            ClientContext.Load(listItems, items => items.Include(item => item.FieldValuesAsText));
+            ClientContext.Load(listItems, items => items.Include(item => item.File));
             ClientContext.ExecuteQuery();
             foreach (var item in listItems)
             {
@@ -506,6 +517,14 @@ namespace SpproFramework.Generic
             }
             return itemList;
 
+        }
+
+        public void Delete(T item)
+        {
+            var list = GetList();
+            var listItem = list.GetItemById(item.ID);
+            listItem.DeleteObject();
+            ClientContext.ExecuteQuery();
         }
 
         #endregion

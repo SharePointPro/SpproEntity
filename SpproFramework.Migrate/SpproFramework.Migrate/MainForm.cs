@@ -101,7 +101,7 @@ namespace SpproFramework.Migrate
             SpContext.ClientContext.ExecuteQuery();
             foreach (var field in spList.Fields.Where(a => !InternalFields.List.Contains(a.InternalName)))
             {
-                listItem.Fields.Add(new FieldSelected() { Field = field, Selected = false });
+                listItem.Fields.Add(new FieldSelected() { Field = field, Selected = true });
             }
             SpContext.SelectedListItems.Add(listItem);
             return listItem;
@@ -122,7 +122,7 @@ namespace SpproFramework.Migrate
                 foreach (var field in currentList.Fields.Where(a => !a.Field.Hidden).OrderBy(a => a.Field.Title).Distinct())
                 {
 
-                    CheckListSpFields.Items.Add(new CheckListItem() { Display = field.Field.Title + " (" + field.Field.InternalName + ")", Value = field.Field }, field.Selected);
+                    CheckListSpFields.Items.Add(new CheckListItem() { Checked= true, Display = field.Field.Title + " (" + field.Field.InternalName + ")", Value = field.Field }, field.Selected);
                 }
                 Cursor.Current = Cursors.Default;
             }
@@ -228,7 +228,8 @@ namespace SpproFramework.Migrate
             Cursor.Current = Cursors.WaitCursor;
             CheckListSpFields_ItemCheck_Disabled = true;
             CheckListSpLists_SelectedIndexChanged_Disabled = true;
-            if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (openFile.ShowDialog
+                () == System.Windows.Forms.DialogResult.OK)
             {
                 SaveUtils saveUtil = new SaveUtils();
                 var loadedSelectedLists = saveUtil.OpenInfo(openFile.FileName);
@@ -312,7 +313,7 @@ namespace SpproFramework.Migrate
             var eventReceiverUtility = new EventReceiverUtility(SpContext.ClientContext);
             eventReceiverUtility.Bind(SpContext.ClientContext, "Quotes", "ListItemUpdated", "https://seymour.sharepointpro.com.au/Services/ListItemUpdated.svc", 1500, EventReceiverType.ItemUpdated);
             //eventReceiverUtility.UnBind(SpContext.ClientContext, "Quotes", "ListItemUpdated");
-        }
+            }
 
 
     }

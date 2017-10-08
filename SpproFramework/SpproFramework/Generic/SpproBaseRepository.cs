@@ -37,9 +37,11 @@ namespace SpproFramework.Generic
         {
             List oList = ClientContext.Web.Lists.GetByTitle(ListName);
             ClientContext.Load(oList);
+            ClientContext.Load(oList, includes => includes.Fields);
             ClientContext.ExecuteQuery();
             return oList;
         }
+
 
         internal ListItem CreateListItem()
         {

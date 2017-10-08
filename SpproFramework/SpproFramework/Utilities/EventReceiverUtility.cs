@@ -25,8 +25,6 @@ namespace SpproFramework.Utilities
 
         #endregion
 
-
-
         public void Bind(ClientContext clientContext,
                         string listName,
                         string eventRecieverName,

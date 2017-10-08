@@ -38,7 +38,7 @@ namespace SpproFramework.Generic
 
         #region Private Members
 
-        private ClientContext ClientContext { get; set; }
+        public ClientContext ClientContext { get; set; } //to do - make this private
 
         #endregion
 

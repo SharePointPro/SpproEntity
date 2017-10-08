@@ -12,6 +12,8 @@ namespace SpproFramework.Migrate.Model
 
         public object Value { get; set; }
 
+        public bool Checked {get;set;}
+
         public override string ToString()
         {
             return Display;

@@ -156,6 +156,7 @@ namespace SpproFramework.Migrate.Builders
                             propertyName = propertyName + "ID";
                         }
                         break;
+
                     case "URL":
                         cType = "FieldUrlValue";
                         break;
