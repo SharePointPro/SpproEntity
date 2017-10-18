@@ -78,7 +78,26 @@ namespace SpproFramework.Migrate.Model
                                                                     "Combine",
                                                                     "RepairDocument",
                                                                     "FolderChildCountID",
-                                                                    "ItemChildCountID"
+                                                                    "ItemChildCountID",
+                                                                    "RestrictedID",
+                                                                    "OriginatorId",
+                                                                    "NoExecuteID",
+                                                                    "ContentVersionID",
+                                                                    "LabelsettingID",
+                                                                    "LabelsID",
+                                                                    "LabelAppliedID",
+                                                                    "LabelappliedbyID",
+                                                                    "ItemisaRecord",
+                                                                    "AccessPolicyID",
+                                                                    "VirusStatusID",
+                                                                    "VirusVendorID",
+                                                                    "VirusInfoID",
+                                                                    "AppCreatedByID",
+                                                                    "AppModifiedByID",
+                                                                    "TotalSizeID",
+                                                                    "LastModifiedDateID",
+                                                                    "TotalFileStreamSizeID",
+                                                                    "TotalFileCountID",
         };
 
     }
