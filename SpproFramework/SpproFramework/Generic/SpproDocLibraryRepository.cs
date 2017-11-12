@@ -65,7 +65,7 @@ namespace SpproFramework.Generic
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public List<T> GetByFileName(string fileName)
+        public async Task<List<T>> GetByFileName(string fileName)
         {
             var list = GetList();
             var itemList = new List<T>();
@@ -76,7 +76,7 @@ namespace SpproFramework.Generic
             ClientContext.ExecuteQuery();
             foreach (var item in listItems)
             {
-                itemList.Add(PopulateSEntity(item));
+                itemList.Add(await PopulateSEntity(item));
             }
             return itemList;
         }

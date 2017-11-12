@@ -38,6 +38,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,9 +47,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MergeDoc.cs" />
+    <Compile Include="MergeOptions.cs" />
     <Compile Include="MergePair.cs" />
     <Compile Include="MergeTemplate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Attributes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SpproFramework\SpproFramework\SpproFramework.csproj">
+      <Project>{aa624e0a-359b-40a0-b17a-dadb30cbb473}</Project>
+      <Name>SpproFramework</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -25,11 +25,14 @@ namespace SpproFramework.Attributes
 
         public bool ReadOnly { get; set; }
 
+        public string DisplayName { get; set; }
     }
 
     public class SpproNavigationAttribute : Attribute
     {
         public bool NavigationProperty { get; set; }
+
+        public bool ForeignKey { get; set; }
 
         /// <summary>
         /// The Foreign key name in foreign list

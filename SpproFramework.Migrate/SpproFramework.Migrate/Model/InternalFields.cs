@@ -98,6 +98,9 @@ namespace SpproFramework.Migrate.Model
                                                                     "LastModifiedDateID",
                                                                     "TotalFileStreamSizeID",
                                                                     "TotalFileCountID",
+                                                                    "ComplianceAssetId",
+                                                                    "Title0",
+                                                                    "SortTypeID",
         };
 
     }

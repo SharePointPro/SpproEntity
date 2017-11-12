@@ -34,11 +34,14 @@ namespace SpproMerge
             DocumentDataSource dds = new DocumentDataSource();
             dds.StartingToken = "«";
             dds.EndingToken = "»";
+            
             foreach (var placeHolder in this.MergeTemplate.MergePair)
             {
                 dds[placeHolder.PlaceHolder] = placeHolder.Value;
             }
 
+            dds["ff0000"] = new ColoredDataItem { Action = ColorAction.Remove };
+            
             foreach (var color in this.MergeTemplate.RemoveColor)
             {
                 dds[color] = new ColoredDataItem { Action = ColorAction.Remove };

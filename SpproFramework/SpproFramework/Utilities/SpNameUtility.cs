@@ -47,13 +47,19 @@ namespace SpproFramework.Utilities
 
             foreach (var property in properties)
             {
+           
                 var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
                 if (customAttributes.Length > 0)
                 {
                     var attribute = (SpproFieldAttribute)customAttributes[0];
-                    if (attribute.SpName == null)
+                    if (attribute.SpName == null && 
+                        property.Name == spName)
                     {
                         return spName.CleanName();
+                    }
+                    else if (attribute.DisplayName == spName)
+                    {
+                        return property.Name;
                     }
                     else if (attribute.SpName == spName)
                     {

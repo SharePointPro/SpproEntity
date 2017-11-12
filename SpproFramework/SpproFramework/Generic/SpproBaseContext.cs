@@ -9,6 +9,9 @@ using SpproFramework.Extensions;
 using SpproFramework.Attributes;
 using Microsoft.SharePoint.Client;
 using System.IO;
+using Microsoft.SharePoint.Client.UserProfiles;
+using Microsoft.SharePoint.Client.Utilities;
+using System.Net;
 
 namespace SpproFramework.Generic
 {
@@ -76,6 +79,83 @@ namespace SpproFramework.Generic
         #endregion
 
         #region Public Methods
+
+        #region Download File Helpers
+
+        /// <summary>
+        /// Download image thumbnail using Web URL
+        /// This is mostly used with Apps 
+        /// </summary>
+        /// <returns></returns>
+        public byte[] DownloadThumbnail(string userName, string password, string relativeImageUrl)
+        {
+            if (!ClientContext.Web.IsObjectPropertyInstantiated("Url"))
+            {
+                ClientContext.Load(ClientContext.Web);
+                ClientContext.ExecuteQuery();
+            }
+            var url = string.Format("{0}/_layouts/15/getpreview.ashx?path={1}", ClientContext.Web.Url, relativeImageUrl);
+            var securePassword = password.ToSecureString(); //Convert to format that Office365 will accept
+            var credentials = new SharePointOnlineCredentials(userName, securePassword);
+            var authCookie = credentials.GetAuthenticationCookie(new Uri(url));
+            WebClient client = new WebClient();
+            client.Headers.Add(HttpRequestHeader.Cookie, authCookie);
+            var data = client.DownloadData(url);
+            return data;
+        }
+
+
+        //TO DO, THIS SHOULD NOT BE HERE. TESTING PURPOSES ONLY
+        private static string AuthCookie { get; set; }
+
+        /// <summary>
+        /// Download image thumbnail using Web URL
+        /// This is mostly used with Apps 
+        /// Require web.config key="SpUserName" key="SpPassword" key="SpUrl" 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<byte[]> DownloadThumbnailAsync(string relativeImageUrl, int tries = 0)
+        {
+            try
+            {
+                var baseUrl = ConfigurationManager.AppSettings["SpUrl"];
+                var url = string.Format("{0}/_layouts/15/getpreview.ashx?path={1}", baseUrl, relativeImageUrl);
+                if (string.IsNullOrWhiteSpace(AuthCookie))
+                {
+                    var userName = ConfigurationManager.AppSettings["SpUserName"];
+                    var password = ConfigurationManager.AppSettings["SpPassword"];
+                    var securePassword = password.ToSecureString(); //Convert to format that Office365 will accept
+                    var credentials = new SharePointOnlineCredentials(userName, securePassword);
+                    SpproBaseContext.AuthCookie = credentials.GetAuthenticationCookie(new Uri(url));
+                }
+
+                try
+                {
+                    WebClient client = new WebClient();
+                    client.Headers.Add(HttpRequestHeader.Cookie, SpproBaseContext.AuthCookie);
+                    var data = await client.DownloadDataTaskAsync(new Uri(url));
+                    return data;
+                }
+                catch (Exception ex)
+                {
+                    SpproBaseContext.AuthCookie = null;
+                    if (++tries > 5) 
+                    {
+                        throw new Exception("Too many tries to downloadThumbnail");
+                    }
+                }
+                return await DownloadThumbnailAsync(relativeImageUrl, tries);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error downloading" + relativeImageUrl, ex);
+            }
+        }
+
+
+        #endregion
+
+        #region Upload File Helpers
 
         /// <summary>
         /// Uploads the specified file to a SharePoint site
@@ -235,8 +315,9 @@ namespace SpproFramework.Generic
             return null;
         }
 
+        #endregion
 
-
+        #region User Helpers
 
         /// <summary>
         /// Get Current User, Dont execute now if you are executing other calls
@@ -254,6 +335,16 @@ namespace SpproFramework.Generic
             }
             return spUser;
         }
+
+        public User GetUserById(int id)
+        {
+            var user = ClientContext.Web.SiteUsers.GetById(id);
+            ClientContext.Load(user);
+            ClientContext.ExecuteQuery();
+            return user;
+        }
+
+        #endregion
 
         #endregion
     }
