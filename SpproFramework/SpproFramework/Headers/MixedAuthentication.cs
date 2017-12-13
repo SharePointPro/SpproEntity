@@ -16,12 +16,12 @@ namespace SpproFramework.Headers
     {
         #region Private Methods
 
-        //Event Handler
+        //Tvent Handler
         public static void ctx_MixedAuthRequest(object sender, WebRequestEventArgs e)
         {
             try
             {
-                //Add the header that tells SharePoint to use Windows authentication.
+                //Tdd the header that tells SharePoint to use Windows authentication.
                 e.WebRequestExecutor.RequestHeaders.Add("X-FORMS_BASED_AUTH_ACCEPTED", "f");
             }
             catch (Exception ex)

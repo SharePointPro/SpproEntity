@@ -15,8 +15,11 @@ using System.Net;
 
 namespace SpproFramework.Generic
 {
-    public abstract class SpproBaseContext
+    public abstract class SpproBaseContext : IDisposable
     {
+        //TO DO, THIS SHOULD NOT BE HERE. TESTING PURPOSES ONLY
+        private static string AuthCookie { get; set; }
+
         #region Enums
 
         public enum AuthMode
@@ -41,7 +44,7 @@ namespace SpproFramework.Generic
 
         #region Private Members
 
-        public ClientContext ClientContext { get; set; } //to do - make this private
+        public ClientContext ClientContext { get; set; } //To do - make this private
 
         #endregion
 
@@ -78,7 +81,55 @@ namespace SpproFramework.Generic
         }
         #endregion
 
+        #region Private Methods
+
+        /// <summary>
+        /// Create Folder via recursion
+        /// </summary>
+        /// <param name="parentFolder"></param>
+        /// <param name="fullFolderUrl"></param>
+        /// <returns></returns>
+        private Folder CreateFolderRecursive(Folder parentFolder, 
+            string fullFolderUrl)
+        {
+            var folderUrls = fullFolderUrl.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            string folderUrl = folderUrls[0];
+            var curFolder = parentFolder.Folders.Add(folderUrl);
+            ClientContext.Web.Context.Load(curFolder);
+            ClientContext.Web.Context.ExecuteQuery();
+
+            if (folderUrls.Length > 1)
+            {
+                var subFolderUrl = string.Join("\\", folderUrls, 1, folderUrls.Length - 1);
+                return CreateFolderRecursive(curFolder, subFolderUrl);
+            }
+            return curFolder;
+        }
+
+        #endregion
+
         #region Public Methods
+
+        #region List File Helpers
+
+        public List<Microsoft.SharePoint.Client.File> ListFiles(string libraryName, string folderName)
+        {
+            var docLib = ClientContext.Web.Lists.GetByTitle(libraryName);
+            var camlQuery = new CamlQuery();
+            camlQuery.ViewXml = @"<View Scope='Recursive'>
+                                    <Query>
+                                    </Query>
+                                </View>";
+            string folderUrl = string.Format("/{0}/{1}", libraryName, folderName);
+            camlQuery.FolderServerRelativeUrl = folderUrl;
+            ListItemCollection listItems = docLib.GetItems(camlQuery);
+            ClientContext.Load(listItems);
+            ClientContext.ExecuteQuery();
+            return listItems.Select(a => a.File).ToList();
+        }
+
+
+        #endregion
 
         #region Download File Helpers
 
@@ -103,10 +154,6 @@ namespace SpproFramework.Generic
             var data = client.DownloadData(url);
             return data;
         }
-
-
-        //TO DO, THIS SHOULD NOT BE HERE. TESTING PURPOSES ONLY
-        private static string AuthCookie { get; set; }
 
         /// <summary>
         /// Download image thumbnail using Web URL
@@ -139,7 +186,7 @@ namespace SpproFramework.Generic
                 catch (Exception ex)
                 {
                     SpproBaseContext.AuthCookie = null;
-                    if (++tries > 5) 
+                    if (++tries > 5)
                     {
                         throw new Exception("Too many tries to downloadThumbnail");
                     }
@@ -153,6 +200,47 @@ namespace SpproFramework.Generic
         }
 
 
+        //public async Task<byte[]> Download()
+        //{
+        //    try
+        //    {
+        //        var baseUrl = ConfigurationManager.AppSettings["SpUrl"];
+        //        var url = string.Format("{0}/_layouts/15/getpreview.ashx?path={1}", baseUrl, relativeImageUrl);
+        //        if (string.IsNullOrWhiteSpace(AuthCookie))
+        //        {
+        //            var userName = ConfigurationManager.AppSettings["SpUserName"];
+        //            var password = ConfigurationManager.AppSettings["SpPassword"];
+        //            var securePassword = password.ToSecureString(); //Convert to format that Office365 will accept
+        //            var credentials = new SharePointOnlineCredentials(userName, securePassword);
+        //            SpproBaseContext.AuthCookie = credentials.GetAuthenticationCookie(new Uri(url));
+        //        }
+
+        //        try
+        //        {
+        //            WebClient client = new WebClient();
+        //            client.Headers.Add(HttpRequestHeader.Cookie, SpproBaseContext.AuthCookie);
+        //            var data = await client.DownloadDataTaskAsync(new Uri(url));
+        //            return data;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            SpproBaseContext.AuthCookie = null;
+        //            if (++tries > 5)
+        //            {
+        //                throw new Exception("Too many tries to downloadThumbnail");
+        //            }
+        //        }
+        //        return await DownloadThumbnailAsync(relativeImageUrl, tries);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("Error downloading" + relativeImageUrl, ex);
+        //    }
+        //}
+
+
+
+
         #endregion
 
         #region Upload File Helpers
@@ -163,8 +251,8 @@ namespace SpproFramework.Generic
         /// <param name="context">SharePoint Client Context</param>
         /// <param name="listTitle">List Title</param>
         /// <param name="fileName">File Name</param>
-        public void UploadFile(string fileName, 
-                               byte[] fileBytes, 
+        public Microsoft.SharePoint.Client.File UploadFile(string fileName,
+                               byte[] fileBytes,
                                 Folder folder)
         {
             var fileUrl = String.Format("{0}/{1}", folder.ServerRelativeUrl, fileName);
@@ -175,12 +263,13 @@ namespace SpproFramework.Generic
             var uploadFile = folder.Files.Add(fci);
             ClientContext.Load(uploadFile);
             ClientContext.ExecuteQuery();
+            return uploadFile;
         }
 
         public Microsoft.SharePoint.Client.File UploadLargeFile(
                                             string filename,
                                             byte[] file,
-                                            Folder folder,    
+                                            Folder folder,
                                             int fileChunkSizeInMB = 3)
         {
             // Each sliced upload requires a unique ID.
@@ -317,6 +406,38 @@ namespace SpproFramework.Generic
 
         #endregion
 
+        #region Path File Helpers
+
+        /// <summary>
+        /// Get Folder
+        /// Create if it doesnt exist
+        /// </summary>
+        /// <param name="listName"></param>
+        /// <param name="folderName"></param>
+        /// <returns></returns>
+        public Folder CreateFolder(string listName, string folderName)
+        {
+            //Get Folder
+            var list = ClientContext.Web.Lists.GetByTitle(listName);
+            string targetFolderUrl = listName + folderName;
+            var folder = ClientContext.Web.GetFolderByServerRelativeUrl(targetFolderUrl);
+            ClientContext.Load(folder);
+
+            try
+            {
+                ClientContext.ExecuteQuery();
+                return folder;
+            }
+            catch (Exception ex)
+            { }
+
+            ClientContext.Load(list);
+            ClientContext.ExecuteQuery();
+            return CreateFolderRecursive(list.RootFolder, folderName);
+        }
+
+        #endregion
+
         #region User Helpers
 
         /// <summary>
@@ -344,8 +465,22 @@ namespace SpproFramework.Generic
             return user;
         }
 
+        public PersonProperties GetPeopleManagerProperties(string accountName)
+        {
+            var peopleManager = new PeopleManager(ClientContext);
+            var userProperties = peopleManager.GetPropertiesFor(accountName);
+            ClientContext.Load(userProperties);
+            ClientContext.ExecuteQuery();
+            return userProperties;
+
+        }
         #endregion
 
         #endregion
+
+        public void Dispose()
+        {
+            ClientContext.Dispose();
+        }
     }
 }

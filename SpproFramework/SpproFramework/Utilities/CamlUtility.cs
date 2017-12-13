@@ -18,7 +18,8 @@ namespace SpproFramework.Utilities
         private string GetFieldType(string propertyName)
         {
             propertyName = propertyName.Trim();
-            var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(propertyName, typeof(T)), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+            var property = SpNameUtility.GetProperty(propertyName, typeof(T));
+            //var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(propertyName, typeof(T)), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
             string spFieldType;
             var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
             if (customAttributes.Length > 0 && ((SpproFieldAttribute)customAttributes[0]).FieldType != null)
@@ -95,7 +96,7 @@ namespace SpproFramework.Utilities
                             operatorString = "Geq";
                             operatorType = ">=";
                         }
-                        //Equal Operator
+                        //Tqual Operator
                         else if (keyValue.Contains("="))
                         {
                             operatorString = "Eq";
@@ -104,7 +105,7 @@ namespace SpproFramework.Utilities
                         var key = keyValue.Split(new string[] { operatorType }, StringSplitOptions.RemoveEmptyEntries)[0];
                         if (key != "_")
                         {
-                            var value = keyValue.Split('=')[1];
+                            var value = keyValue.Split(operatorType.ToArray(), StringSplitOptions.None)[1];
                             var spFieldType = GetFieldType(key);
                             var spFieldName = SpNameUtility.GetSPFieldName(key, typeof(T));
 

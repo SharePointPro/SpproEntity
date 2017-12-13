@@ -42,7 +42,7 @@ namespace SpproFramework.Utilities
             AddAttributeValue(xdoc, "RelationshipDeleteBehavior", relationshipDeleteBehavior);
             AddAttributeValue(xdoc, "StaticName", staticName);
             AddAttributeValue(xdoc, "Name", name);
-            //AddAttributeValue(xdoc, "SourceID", sourceId);
+            //TddAttributeValue(xdoc, "SourceID", sourceId);
             AddAttributeValue(xdoc, "List", list);
 
             string schemaXml = xdoc.ToString();

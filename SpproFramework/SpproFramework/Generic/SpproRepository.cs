@@ -42,7 +42,10 @@ namespace SpproFramework.Generic
             return false;
         }
 
-        private ListItem SetValues(string[] keyValues, ListItem listItem, ref T sEntity)
+        private ListItem SetValues(string[] keyValues, 
+            ListItem listItem, 
+            ref T sEntity, 
+            bool toLocalTime)
         {
             foreach (var keyValue in keyValues)
             {
@@ -51,7 +54,7 @@ namespace SpproFramework.Generic
                     bool readOnly = false;
                     var key = keyValue.Split('=')[0];
                     var value = WebUtility.UrlDecode(keyValue.Split('=')[1]);
-                    var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(key, typeof(T)));
+                    var property = SpNameUtility.GetProperty(key, typeof(T)); //typeof(T).GetProperty(SpNameUtility.GetPropertyName(key, typeof(T)));
                     var customAttributes = property.GetCustomAttributes(typeof(SpproFieldAttribute), true);
 
                     if (customAttributes.Count() > 0)
@@ -70,8 +73,11 @@ namespace SpproFramework.Generic
                             DateTime dateValue = new DateTime(); ;
                             if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out dateValue))
                             {
-                                finalValue = dateValue.ToUniversalTime();
-                                property.SetValue(sEntity, Convert.ChangeType(finalValue, targetType));
+                                if (toLocalTime){
+                                    dateValue = dateValue.ToLocalTime();
+                                }
+                                finalValue = dateValue;
+                                property.SetValue(sEntity, Convert.ChangeType(dateValue, targetType));
                             }
                             else
                             {
@@ -111,14 +117,14 @@ namespace SpproFramework.Generic
                         }
                         else if (property.PropertyType == typeof(string[]))
                         {
-                            finalValue = value.Split(new string[] { "<<,>>"} , StringSplitOptions.RemoveEmptyEntries);
+                            finalValue = value.Split(new string[] { "<<,>>" }, StringSplitOptions.RemoveEmptyEntries);
                             property.SetValue(sEntity, finalValue);
                         }
                         else
                         {
                             if (!(finalValue.ToString() == "" && TypeUtility.IsNumeric(targetType)))
                             {
-                                if (finalValue == "NaN")
+                                if (finalValue.ToString() == "NaN")
                                 {
                                     finalValue = 0;
                                 }
@@ -162,8 +168,7 @@ namespace SpproFramework.Generic
         /// <param name="entity"></param>
         /// <param name="item"></param>
         /// <returns></returns>
-        internal async Task<T> PopulateSEntity(ListItem item, 
-            string timeZone = "AUS Eastern Standard Time")
+        internal async Task<T> PopulateSEntity(ListItem item)
         {
             var entity = CreateInstance();
             entity.ID = item.Id;
@@ -171,7 +176,8 @@ namespace SpproFramework.Generic
             {
                 try
                 {
-                    var property = typeof(T).GetProperty(SpNameUtility.GetPropertyName(field.Key, typeof(T)));
+
+                    var property = SpNameUtility.GetProperty(field.Key, typeof(T)); //typeof(T).GetProperty(SpNameUtility.GetPropertyName(field.Key, typeof(T)));
                     if (property != null)
                     {
                         var customAttributes = property.GetCustomAttributes(typeof(SpproNavigationAttribute), true);
@@ -326,8 +332,12 @@ namespace SpproFramework.Generic
                                             break;
                                         case "DateTime":
                                         case "DateTime?":
-                                            DateTime localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)field.Value, timeZone);                                            
-                                            property.SetValue(entity, localTime);
+                                            //DateTime localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)field.Value, timeZone);
+                                            var dateValue = new DateTime();
+                                            if (DateTime.TryParse(field.Value.ToString(), out dateValue))
+                                            {
+                                                property.SetValue(entity, dateValue);
+                                            }
                                             break;
                                         default:
                                             property.SetValue(entity, Convert.ChangeType(field.Value, targetType));
@@ -372,20 +382,27 @@ namespace SpproFramework.Generic
                     else if (customAttributes.Length > 0 && ((SpproNavigationAttribute)customAttributes[0]).ForeignKey)
                     {
                         var foriegnKey = ((SpproNavigationAttribute)customAttributes[0]).LookupField;
-                        var foriegnId = Convert.ToInt32(((FieldLookupValue)item.FieldValues[foriegnKey]).LookupId);
-                        if (foriegnId > 0)
+                        try
                         {
-                            var repo = typeof(SpproRepository<>);
-                            var constructedRepoType = repo.MakeGenericType(property.PropertyType);
-                            var listName = property.PropertyType.Name;
-                            var propertyAttributes = property.PropertyType.GetCustomAttributes(typeof(SpproListAttribute), true);
-                            if (propertyAttributes.Length > 0 && !string.IsNullOrWhiteSpace(((SpproListAttribute)propertyAttributes[0]).ListName))
+                            var foriegnId = Convert.ToInt32(((FieldLookupValue)item.FieldValues[foriegnKey]).LookupId);
+                            if (foriegnId > 0)
                             {
-                                listName = ((SpproListAttribute)propertyAttributes[0]).ListName;
+                                var repo = typeof(SpproRepository<>);
+                                var constructedRepoType = repo.MakeGenericType(property.PropertyType);
+                                var listName = property.PropertyType.Name;
+                                var propertyAttributes = property.PropertyType.GetCustomAttributes(typeof(SpproListAttribute), true);
+                                if (propertyAttributes.Length > 0 && !string.IsNullOrWhiteSpace(((SpproListAttribute)propertyAttributes[0]).ListName))
+                                {
+                                    listName = ((SpproListAttribute)propertyAttributes[0]).ListName;
+                                }
+                                dynamic repoInstance = Activator.CreateInstance(constructedRepoType, listName, ClientContext);
+                                var values = await repoInstance.GetById(foriegnId);
+                                property.SetValue(entity, values);
                             }
-                            dynamic repoInstance = Activator.CreateInstance(constructedRepoType, listName, ClientContext);
-                            var values = await repoInstance.GetById(foriegnId);
-                            property.SetValue(entity, values);
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Error("Error with lazy loading foriegn key", ex);
                         }
                     }
                 }
@@ -450,7 +467,8 @@ namespace SpproFramework.Generic
                         {
                             formData.Add(string.Format("{0}={1}", name, ((FieldLookupValue)(value)).LookupId));
                         }
-                        else if (value is string[]){
+                        else if (value is string[])
+                        {
                             formData.Add(string.Format("{0}={1}", name, string.Join("<<,>>", ((string[])(value)))));
                         }
                         else
@@ -478,47 +496,55 @@ namespace SpproFramework.Generic
             int id = 0;
             foreach (var property in entity.GetType().GetProperties())
             {
-                var customAttributes = property.GetCustomAttributes(typeof(SpproNavigationAttribute), true);
-                //Dont try and update a Lookup Object
-                //if (customAttributes.Length == 0 || ((SpproNavigationAttribute)customAttributes[0]).LookupField == null)
-                //{
-                    var name = property.Name;
-                    var value = entity.GetType().GetProperty(name).GetValue(entity);
-                    if (name.ToLower() != "id" && value != null)
+                var name = property.Name;
+                var value = entity.GetType().GetProperty(name).GetValue(entity);
+                try
+                {
+                    var customAttributes = property.GetCustomAttributes(typeof(SpproNavigationAttribute), true);
+                    //Dont try and update a Lookup Object
+                    if (customAttributes.Length == 0 || ((SpproNavigationAttribute)customAttributes[0]).LookupField == null)
                     {
-                        if (value is DateTime?)
+
+                        if (name.ToLower() != "id" && value != null)
                         {
-                            formData.Add(string.Format("{0}={1}[dd-MM-yyyy hh:mm tt]", name, ((DateTime?)value).Value.ToString("dd-MM-yyyy hh:mm tt")));
-                        }
-                        else if (value is FieldUrlValue)
-                        {
-                            formData.Add(string.Format("{0}={1},{2}", name, ((FieldUrlValue)value).Description, WebUtility.UrlEncode(((FieldUrlValue)value).Url)));
-                        }
-                        else if (value is FieldLookupValue)
-                        {
-                            formData.Add(string.Format("{0}={1}", name, ((FieldLookupValue)(value)).LookupId));
-                        }
-                        else if (value is int?)
-                        {
-                            if (value != null || (int?)value > 0)
+                            if (value is DateTime?)
                             {
-                                formData.Add(string.Format("{0}={1}", name, value));
+                                formData.Add(string.Format("{0}={1}[dd-MM-yyyy hh:mm tt]", name, ((DateTime?)value).Value.ToString("dd-MM-yyyy hh:mm tt")));
+                            }
+                            else if (value is FieldUrlValue)
+                            {
+                                formData.Add(string.Format("{0}={1},{2}", name, ((FieldUrlValue)value).Description, WebUtility.UrlEncode(((FieldUrlValue)value).Url)));
+                            }
+                            else if (value is FieldLookupValue)
+                            {
+                                formData.Add(string.Format("{0}={1}", name, ((FieldLookupValue)(value)).LookupId));
+                            }
+                            else if (value is int?)
+                            {
+                                if (value != null || (int?)value > 0)
+                                {
+                                    formData.Add(string.Format("{0}={1}", name, value));
+                                }
+                            }
+                            else
+                            {
+                                formData.Add(string.Format("{0}={1}", name, WebUtility.UrlEncode(value.ToString())));
                             }
                         }
-                        else
+                        else if (name.ToLower() == "id")
                         {
-                            formData.Add(string.Format("{0}={1}", name, WebUtility.UrlEncode(value.ToString())));
+                            id = (int)value;
                         }
                     }
-                    else if (name.ToLower() == "id")
-                    {
-                        id = (int)value;
-                    }
-                //}
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("There was an error with " + name + " value: " + value, ex);
+                }
             }
             if (id > 0)
             {
-                return await UpdateAsync(id, string.Join("&", formData));
+                return Update(id, string.Join("&", formData));
             }
             else
             {
@@ -562,9 +588,26 @@ namespace SpproFramework.Generic
                 listItem["Editor"] = modifiedUser;
             }
             var keyValues = formData.RemoveFromQueryString("id").Split('&');
-            listItem = SetValues(keyValues, listItem, ref sEntity);
+            listItem = SetValues(keyValues, listItem, ref sEntity, true);
             listItem.Update();
-            ClientContext.ExecuteQuery();
+            var saved = false;
+            int tries = 0;
+            while (!saved && tries <= 10)
+            {
+                try
+                {
+                    ClientContext.ExecuteQuery();
+                    saved = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    tries++;
+                    log.Error("Error Updating, trying again", ex);
+
+                }
+            }
+
             sEntity.ID = id;
             return sEntity;
         }
@@ -589,12 +632,30 @@ namespace SpproFramework.Generic
                 listItem["Editor"] = modifiedUser;
             }
             var keyValues = formData.RemoveFromQueryString("id").Split('&');
-            listItem = SetValues(keyValues, listItem, ref sEntity);
+            listItem = SetValues(keyValues, listItem, ref sEntity, true);
             listItem.Update();
-            await Task.Run(() =>
+            var saved = false;
+            int tries = 0;
+            while (!saved && tries <= 10)
             {
-                ClientContext.ExecuteQuery();
-            });
+                try
+                {
+
+                    await Task.Run(() =>
+                    {
+                        ClientContext.ExecuteQuery();
+                        saved = true;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    tries++;
+                    log.Error("Error Updating, trying again", ex);
+
+                }
+            }
+
             sEntity.ID = id;
             return sEntity;
         }
@@ -635,7 +696,7 @@ namespace SpproFramework.Generic
                 listItem["Author"] = modifiedUser;
                 listItem["Editor"] = modifiedUser;
             }
-            listItem = SetValues(keyValues, listItem, ref sEntity);
+            listItem = SetValues(keyValues, listItem, ref sEntity, true);
             listItem.Update();
 
             ClientContext.ExecuteQuery();
@@ -664,7 +725,7 @@ namespace SpproFramework.Generic
                 listItem["Author"] = modifiedUser;
                 listItem["Editor"] = modifiedUser;
             }
-            listItem = SetValues(keyValues, listItem, ref sEntity);
+            listItem = SetValues(keyValues, listItem, ref sEntity, true);
             listItem.Update();
 
             await Task.Run(() =>
@@ -675,14 +736,21 @@ namespace SpproFramework.Generic
             return sEntity;
         }
 
-        public async Task<T> GetById(int id)
+        public async Task<T> GetById(int id)        
         {
-            //var list = GetList();
-            var list = ClientContext.Web.Lists.GetByTitle(ListName);
-            var listItem = list.GetItemById(id);
-            ClientContext.Load(listItem);
-            ClientContext.ExecuteQuery();
-            return await PopulateSEntity(listItem);
+            try
+            {
+                var list = ClientContext.Web.Lists.GetByTitle(ListName);
+                var listItem = list.GetItemById(id);
+                ClientContext.Load(listItem);
+                ClientContext.ExecuteQuery();
+                return await PopulateSEntity(listItem);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Error getting Id" + id, ex);
+                throw;
+            }
         }
 
 
@@ -697,6 +765,7 @@ namespace SpproFramework.Generic
             ClientContext.ExecuteQuery();
             foreach (var item in listItems)
             {
+               
                 itemList.Add(await PopulateSEntity(item));
             }
             return itemList;
