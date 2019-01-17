@@ -7,6 +7,10 @@ Automatically generate SharePoint lists as Entitys. A context is created with al
 
 CRUD Actions has never been simpler.
 
+# Why Not Linq to SharePoint?
+Linq to SharePoint is an excellent option (Most likely a better choice for you). 
+The advantage to the SharePoint Entity Framework is it offers out of the box support for file Attachments and Geolocation fields.
+
 # Installation
 * Create your SharePoint Lists.
 * Download library and reference SpproFramework in your project.
