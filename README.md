@@ -9,7 +9,7 @@ CRUD Actions has never been simpler.
 
 # Why Not Linq to SharePoint?
 Linq to SharePoint is an excellent option (Most likely a better choice for you). 
-The advantage to the SharePoint Entity Framework is it offers out of the box support for file Attachments and Geolocation fields.
+Advantages to the SharePoint Entity Framework is it offers out of the box support for file Attachments and Geolocation fields and easy to edit source.
 
 # Installation
 * Create your SharePoint Lists.
