@@ -53,5 +53,5 @@ Model Snippit Example:
 Sppro Entity is still very much a work in progress. If you have any suggestion please contact me via my webpage.
 See more here: http://www.sharepointpro.com.au
 
-I plan on introducing LINQ provider. 
+I plan on introducing a LINQ provider. 
            
